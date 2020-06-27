@@ -17,6 +17,31 @@ function downloadFile (url) {
     })
 }
 
+// 写文件
+const fs = Taro.getFileSystemManager()
+function writeFile (base64) {
+    return new Promise((resolve, reject) => {
+        const filePath = `${Taro.env.USER_DATA_PATH}/poster_${Date.now()}.png`
+        const startIdx = base64.indexOf('base64,') + 7
+        const data = base64.substring(startIdx)
+        fs.writeFile({
+            filePath,
+            data,
+            encoding: 'base64',
+            success () {
+                // 保存成功
+                resolve(filePath)
+            },
+            fail () {
+                reject({
+                    success: false,
+                    message: '图片保存到相册失败'
+                })
+            }
+        })
+    })
+}
+
 // 保存图片到相册
 function saveImageToPhotosAlbum (filePath) {
     return new Promise((resolve, reject) => {
@@ -112,8 +137,14 @@ function checkAuthorization () {
     })
 }
 
-export default function downloadImageToPhotosAlbum (url) {
+export function downloadImageToPhotosAlbum (url) {
     return checkAuthorization().then(() =>
         downloadFile(url).then(saveImageToPhotosAlbum)
     )
+}
+
+export function saveBase64ToPhotosAlbum (base64) {
+    return checkAuthorization().then(() => {
+        writeFile(base64).then(saveImageToPhotosAlbum)
+    })
 }
